@@ -13,6 +13,7 @@ curr_line=1
 curr_file=
 func_counter=0
 in_func_param=false
+is_in_comment=false
 
 function grep_somethin {
     echo "$1" | grep -E "$2" > /dev/null
@@ -71,6 +72,21 @@ function test_brace {
 function test_comment {
     if echo "$1" | grep "/\*" > /dev/null && test $func_counter -gt 0; then
         emit_err "comments are not allowed within functions"
+    fi
+    grep_somethin "$1" "^.+/\*" && emit_err "invalid comment (check characters before '/*')"
+    grep_somethin "$1" "^/\*.+" && emit_err "invalid comment (check trailing characters)"
+    grep_somethin "$1" "^.+\*/" && emit_err "invalid comment (check characters before '*/')"
+    grep_somethin "$1" "^\*/.+" && emit_err "invalid comment (check trailing characters)"
+    #FIXME: something prettier ?
+    if grep_somethin "$1" "^/\*"; then
+        is_in_comment=true
+        grep_somethin "$1" "\*/" && is_in_comment=false
+        return 0
+    fi
+    grep_somethin "$1" "\*/" && is_in_comment=false
+
+    if test $is_in_comment = true; then
+        grep_somethin "$1" "^\*\*" || (emit_err "invalid comment" && return 0)
     fi
 }
 
