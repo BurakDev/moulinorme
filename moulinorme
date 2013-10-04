@@ -8,12 +8,14 @@
 
 export score=0
 max_line=80
-max_line_func=28 # 25 + 3   because fuck you that's why. Code your own script if you don't like it ! scumbag
+max_line_func=26 # 25 + 1   because we count the first bracket
+max_param=4
 curr_line=1
 curr_file=
 func_counter=0
 in_func_param=false
 is_in_comment=false
+func_param_number=1
 
 function grep_somethin {
     echo "$1" | grep -E "$2" > /dev/null
@@ -36,10 +38,23 @@ function test_trailing {
     test "$(echo "$1" | tail -c -2)" = " " && emit_err "trailing spaces"
 }
 
-function test_func_len {
+function test_params {
+    test $in_func_param = false && return 0
+
+    (( func_param_number += $(echo $1 | tr -cd , | wc -c) ))
+}
+
+function test_func {
     # if we are inside function parameters
     if test $in_func_param = true; then
-        echo $1 | grep ")" > /dev/null && in_func_param=false && ((func_counter++)) && return 0
+
+        if echo $1 | grep "{" > /dev/null; then
+            in_func_param=false
+            ((func_counter++))
+            test $func_param_number -gt $max_param && emit_err "too many parameters" $(($func_param_number - $max_param))
+            func_param_number=1
+            return 0
+        fi
     fi
 
     # if we are outside of a function
@@ -106,11 +121,12 @@ function norm_file {
     while IFS='' read -r line; do
         test_len "$line"
         test_trailing "$line"
-        test_func_len "$line"
+        test_func "$line"
         test_keyword "$line"
         test_brace "$line"
         test_comment "$line"
         test_comma "$line"
+        test_params "$line"
         ((curr_line++))
     done < $curr_file
 }
