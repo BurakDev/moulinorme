@@ -1,0 +1,100 @@
+#! /bin/bash
+
+# Adrien Morel 2013. Vive le gâteau basque !
+
+# TODO:
+# use getopt
+# use a function istead of all the grep thing
+
+export score=0
+max_line=80
+max_line_func=28 # 25 + 3   because fuck you that's why. Code your own script if you don't like it ! scumbag
+curr_line=1
+curr_file=
+func_counter=0
+in_func_param=false
+
+function grep_somethin {
+    echo "$1" | grep -E "$2" > /dev/null
+    return $?
+}
+
+function emit_err {
+    penalty=${2:-1}
+    echo -e $curr_file:$curr_line: "\t" $1 "(-$penalty pts)"
+    ((score -= $penalty))
+}
+
+function test_len {
+    size=$(echo "$1" | wc -c)
+    test $size -gt $max_line && emit_err "line too long" $(($size - $max_line - 1))
+}
+
+#TODO: count the number of trailing spaces
+function test_trailing {
+    test "$(echo "$1" | tail -c -2)" = " " && emit_err "trailing spaces"
+}
+
+function test_func_len {
+    # if we are inside function parameters
+    if test $in_func_param = true; then
+        echo $1 | grep ")" > /dev/null && in_func_param=false && ((func_counter++)) && return 0
+    fi
+
+    # if we are outside of a function
+    if test $func_counter -eq 0; then
+        grep_somethin "$1" "^.*\(.*\)$" && ((func_counter++)) && return 0
+        grep_somethin "$1" "^.*\(" && in_func_param=true && return 0
+    fi
+
+    # check if we are going out
+    if test $func_counter -gt 0 && grep_somethin "$1" "^}"; then
+        test $func_counter -gt $max_line_func && emit_err "function is more than 25 lines" $(($func_counter - $max_line_func))
+        func_counter=0
+        return 0
+    fi
+    test $func_counter -gt 0 && ((func_counter++))
+}
+
+function test_keyword {
+    grep_somethin "$1" "(return|if|while)\(" && emit_err "there should be a space after the keyword"
+    if grep_somethin "$1" "return"; then
+        grep_somethin "$1" "return \(.*\);$" || emit_err "content of return not enclosed within parentheses"
+    fi
+}
+
+#useless ?
+function test_brace {
+    test $(echo $1 | tr -cd [{}] | wc -c) -gt 1 && emit_err "there shouldn't be more than one bracket"
+}
+
+function test_comment {
+    if echo "$1" | grep "/\*" > /dev/null && test $func_counter -gt 0; then
+        emit_err "comments are not allowed within functions"
+    fi
+}
+
+function norm_file {
+    curr_file=$1
+    case "$curr_file" in
+        *.h) ext=h ;;
+        *.c) ext=c ;;
+        *) echo "wrong file extention" 1>&2 && exit 1
+    esac
+
+    # TODO: fix a bug where is the last line contains EOF, it is not read
+    while IFS='' read -r line; do
+        test_len "$line"
+        test_trailing "$line"
+        test_func_len "$line"
+        test_keyword "$line"
+        test_brace "$line"
+        test_comment "$line"
+        ((curr_line++))
+    done < $curr_file
+}
+
+norm_file $1
+
+echo "note finale: $score"
+test $score -eq 0 && exit 0 || exit 1
