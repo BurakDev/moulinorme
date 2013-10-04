@@ -90,6 +90,10 @@ function test_comment {
     fi
 }
 
+function test_comma {
+    grep_somethin "$1" ",[^ ]" && emit_err "missing space after comma"
+}
+
 function norm_file {
     curr_file=$1
     case "$curr_file" in
@@ -106,6 +110,7 @@ function norm_file {
         test_keyword "$line"
         test_brace "$line"
         test_comment "$line"
+        test_comma "$line"
         ((curr_line++))
     done < $curr_file
 }
