@@ -10,9 +10,11 @@ export score=0
 max_line=80
 max_line_func=26 # 25 + 1   because we count the first bracket
 max_param=4
+max_func=5
 curr_line=1
 curr_file=
-func_counter=0
+func_lines=0
+func_number=0
 in_func_param=false
 is_in_comment=false
 func_param_number=1
@@ -50,7 +52,8 @@ function test_func {
 
         if echo $1 | grep "{" > /dev/null; then
             in_func_param=false
-            ((func_counter++))
+            ((func_lines++))
+            ((func_number++))
             test $func_param_number -gt $max_param && emit_err "too many parameters" $(($func_param_number - $max_param))
             func_param_number=1
             return 0
@@ -58,18 +61,18 @@ function test_func {
     fi
 
     # if we are outside of a function
-    if test $func_counter -eq 0; then
-        grep_somethin "$1" "^.*\(.*\)$" && ((func_counter++)) && return 0
+    if test $func_lines -eq 0; then
+        grep_somethin "$1" "^.*\(.*\)$" && ((func_lines++)) && return 0
         grep_somethin "$1" "^.*\(" && in_func_param=true && return 0
     fi
 
     # check if we are going out
-    if test $func_counter -gt 0 && grep_somethin "$1" "^}"; then
-        test $func_counter -gt $max_line_func && emit_err "function is more than 25 lines" $(($func_counter - $max_line_func))
-        func_counter=0
+    if test $func_lines -gt 0 && grep_somethin "$1" "^}"; then
+        test $func_lines -gt $max_line_func && emit_err "function is more than 25 lines" $(($func_lines - $max_line_func))
+        func_lines=0
         return 0
     fi
-    test $func_counter -gt 0 && ((func_counter++))
+    test $func_lines -gt 0 && ((func_lines++))
 }
 
 function test_keyword {
@@ -85,7 +88,7 @@ function test_brace {
 }
 
 function test_comment {
-    if echo "$1" | grep "/\*" > /dev/null && test $func_counter -gt 0; then
+    if echo "$1" | grep "/\*" > /dev/null && test $func_lines -gt 0; then
         emit_err "comments are not allowed within functions"
     fi
     grep_somethin "$1" "^.+/\*" && emit_err "invalid comment (check characters before '/*')"
@@ -129,6 +132,7 @@ function norm_file {
         test_params "$line"
         ((curr_line++))
     done < $curr_file
+    test $func_number -gt $max_func && emit_err "more than $max_func functions in this file" $(($func_number - $max_func))
 }
 
 norm_file $1
