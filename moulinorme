@@ -122,7 +122,8 @@ function norm_file {
     case "$curr_file" in
         *.h) ext=h ;;
         *.c) ext=c ; c_specifics;;
-        *) echo "wrong file extention" 1>&2 && exit 1
+        Makefile) echo "warning: Makefile not supported yet" 1>&2 ; return 1 ;;
+        *) echo "warning: wrong file extention" 1>&2 && return 1
     esac
 
     # TODO: fix read returning 1 when the last line contains EOF
