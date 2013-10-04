@@ -112,15 +112,20 @@ function test_comma {
     grep_somethin "$1" ",[^ ]" && emit_err "missing space after comma"
 }
 
+function c_specifics {
+    grep -E "^#[ \t]*define" $curr_file > /dev/null &&
+    emit_err "defines aren't really allowed within C file"
+}
+
 function norm_file {
     curr_file=$1
     case "$curr_file" in
         *.h) ext=h ;;
-        *.c) ext=c ;;
+        *.c) ext=c ; c_specifics;;
         *) echo "wrong file extention" 1>&2 && exit 1
     esac
 
-    # TODO: fix a bug where is the last line contains EOF, it is not read
+    # TODO: fix read returning 1 when the last line contains EOF
     while IFS='' read -r line; do
         test_len "$line"
         test_trailing "$line"
