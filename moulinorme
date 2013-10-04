@@ -6,7 +6,7 @@
 # use getopt
 # use a function istead of all the grep thing
 
-export score=0
+score=0
 max_line=80
 max_line_func=26 # 25 + 1   because we count the first bracket
 max_param=4
@@ -112,6 +112,14 @@ function test_comma {
     grep_somethin "$1" ",[^ ]" && emit_err "missing space after comma"
 }
 
+function test_keywords {
+
+    for word in "for" "do" "switch" "goto"
+    do
+        echo "$1" | grep -E "[^\"]$word[^\"]" > /dev/null && emit_err "the keyword \`$word' is stricly forbidden !"
+    done
+}
+
 function c_specifics {
     grep -E "^#[ \t]*define" $curr_file > /dev/null &&
     emit_err "defines aren't really allowed within C file"
@@ -136,6 +144,7 @@ function norm_file {
         test_comment "$line"
         test_comma "$line"
         test_params "$line"
+        test_keywords "$line"
         ((curr_line++))
     done < $curr_file
     test $func_number -gt $max_func && emit_err "more than $max_func functions in this file" $(($func_number - $max_func))
