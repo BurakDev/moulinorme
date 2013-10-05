@@ -114,6 +114,8 @@ function test_comma {
 
 function test_keywords {
 
+    test $is_in_comment = true && return 0
+
     for word in "for" "do" "switch" "goto"
     do
         echo "$1" | grep -E "[^\"]$word[^\"]" > /dev/null && emit_err "the keyword \`$word' is stricly forbidden !"
