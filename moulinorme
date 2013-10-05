@@ -37,7 +37,12 @@ function test_len {
 
 #TODO: count the number of trailing spaces
 function test_trailing {
+    skip_comment && return
     test "$(echo "$1" | tail -c -2)" = " " && emit_err "trailing spaces"
+}
+
+function skip_comment {
+    test $is_in_comment = true && return 0
 }
 
 function test_params {
@@ -115,8 +120,7 @@ function test_comma {
 }
 
 function test_keywords {
-
-    test $is_in_comment = true && return 0
+    skip_comment && return
 
     for word in "for" "do" "switch" "goto"
     do
@@ -149,6 +153,7 @@ function norm_file {
         test_comma "$line"
         test_params "$line"
         test_keywords "$line"
+
         ((curr_line++))
     done < $curr_file
     test $func_number -gt $max_func && emit_err "more than $max_func functions in this file" $(($func_number - $max_func))
