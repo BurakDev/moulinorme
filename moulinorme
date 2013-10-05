@@ -7,17 +7,6 @@
 # use a function istead of all the grep thing
 
 score=0
-max_line=80
-max_line_func=26 # 25 + 1   because we count the first bracket
-max_param=4
-max_func=5
-curr_line=1
-curr_file=
-func_lines=0
-func_number=0
-in_func_param=false
-is_in_comment=false
-func_param_number=1
 
 function grep_somethin {
     echo "$1" | grep -E "$2" > /dev/null
@@ -159,7 +148,21 @@ function norm_file {
     test $func_number -gt $max_func && emit_err "more than $max_func functions in this file" $(($func_number - $max_func))
 }
 
-norm_file $1
+for file in $@; do
+    max_line=80
+    max_line_func=26 # 25 + 1   because we count the first bracket
+    max_param=4
+    max_func=5
+    curr_line=1
+    curr_file=
+    func_lines=0
+    func_number=0
+    in_func_param=false
+    is_in_comment=false
+    func_param_number=1
+
+    norm_file $file
+done
 
 echo "note finale: $score"
 test $score -eq 0 && exit 0 || exit 1
