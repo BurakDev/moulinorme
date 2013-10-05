@@ -84,7 +84,9 @@ function test_keyword {
 
 #useless ?
 function test_brace {
-    test $(echo $1 | tr -cd [{}] | wc -c) -gt 1 && emit_err "there shouldn't be more than one bracket"
+    true
+    #buggy
+    #test $(echo $1 | tr -cd "[{}]" | wc -c) -gt 1 && emit_err "there shouldn't be more than one bracket"
 }
 
 function test_comment {
