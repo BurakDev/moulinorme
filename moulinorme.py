@@ -83,13 +83,14 @@ def check_func(line):
             if func_param_number > MAX_PARAM:
                 emit_err("too many parameters", func_param_number - MAX_PARAM)
             func_param_number = 1
-            return 0
     if func_line_count == 0:
         if regex_test(line, '^.*\(.*\)$'):
             func_line_count += 1
         if regex_test(line, '^.*\('):
             in_func_param = True
-            return 0
+        if func_line_count == 1 or in_func_param == True:
+            if regex_test(line, '[\t]+.*\(') is None:
+                emit_err("missing tabulation(s) before function's name")
 
     # are we going out ?
     if func_line_count > 0 and regex_test(line, '^}'):
