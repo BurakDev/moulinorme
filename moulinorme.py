@@ -7,7 +7,6 @@ score = 0
 curr_file = ''
 curr_line = 0
 in_func_param = False
-in_func = False
 func_param_number = 0
 func_count = 0
 func_line_count = 0
@@ -97,29 +96,55 @@ def check_func(line):
         # +2 because we count the brackets
         if func_line_count - 2 > MAX_LINES_FUNC:
             emit_err('function is is more than {} lines'.format(MAX_LINES_FUNC), (func_line_count - 2) - MAX_LINES_FUNC)
-            func_line_count = 0
-            return 0
+        func_line_count = 0
+        return 0
     if func_line_count > 0:
         func_line_count += 1
 
+
+def check_comments(line):
+    global is_in_comment
+    global func_line_count
+
+    if  func_line_count > 0 and regex_test(line, '/\*'):
+        emit_err('comments are not allowed within functions')
+    if regex_test(line, '^.+/\*'):
+        emit_err('invalid comment (check characters before "/*")')
+    if regex_test(line, '^/\*.+'):
+        emit_err('invalid comment (check trailing characters)')
+    if regex_test(line, '^.+\*/'):
+        emit_err('invalid comment (check characters before "*/")')
+    if regex_test(line, '^\*/.+'):
+        emit_err('invalid comment (check trailing characters)')
+
+    if regex_test(line, '^/\*'):
+        is_in_comment = True
+        if regex_test(line, '\*/'):
+            is_in_comment = False
+        return 0
+    if regex_test(line, '\*/'):
+        is_in_comment = False
+    if is_in_comment == True:
+        if regex_test(line, '^\*\*') is None:
+            emit_err("invalid comment")
 
 
 def check_file(file):
     global curr_file
     global curr_line
     global in_func_param
-    global in_func
     global func_count
     global func_line_count
     global func_param_number
+    global is_in_comment
 
     curr_file = file
     curr_line = 0
     in_funcs_params = False
-    in_func = False
     func_count = 0
     func_line_count = 0
     func_param_number = 0
+    is_in_comment = False
 
     with open(file) as f:
         line = f.readline()
@@ -128,6 +153,7 @@ def check_file(file):
             curr_line += 1
             check_len(line)
             check_trailing(line)
+            check_comments(line)
             if file.endswith('.c'):
                 c_specifics(line)
                 check_func(line)
