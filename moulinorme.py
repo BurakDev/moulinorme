@@ -1,4 +1,10 @@
 #! /usr/bin/env python
+#TODO:
+# check headers
+# check Makefile's coding rules
+# check trivial indentation (spaces/tabulations)
+# check #ifndef MY_HEADER_H_ etc.
+# check Makefile relink
 
 import sys
 import re
