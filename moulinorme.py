@@ -139,6 +139,13 @@ def check_prototype(line):
     if func_line_count == 0 and regex_test(line, '^.+\(.*\);[ \t]*$'):
         emit_err("prototypes are only allowed within header files");
 
+def check_filename(file):
+
+    if regex_test(file, '^([0-9_a-z.])+$') is None:
+        emit_err("invalid file name `{}\'. -> [0-9_a-z]".format(file))
+    if regex_test(file, '"Makefile"|(.*\.[ch])') is None:
+        sys.stderr.write('error: unsupported file `{}\'\n'.format(file))
+
 # File input ------------------------------------------
 
 def check_file(file):
@@ -161,6 +168,7 @@ def check_file(file):
     with open(file) as f:
         line = f.readline()
         check_header(file, f)
+        check_filename(file)
         while line:
             line = line.replace('\n', '')
             curr_line += 1
