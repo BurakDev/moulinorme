@@ -128,6 +128,18 @@ def check_comments(line):
         if regex_test(line, '^\*\*') is None:
             emit_err("invalid comment")
 
+#TODO
+def check_header(file, f):
+    if file.endswith('.c') or file.endswith('.h'):
+        return
+
+def check_prototype(line):
+    global func_line_count
+
+    if func_line_count == 0 and regex_test(line, '^.+\(.*\);[ \t]*$'):
+        emit_err("prototypes are only allowed within header files");
+
+# File input ------------------------------------------
 
 def check_file(file):
     global curr_file
@@ -148,6 +160,7 @@ def check_file(file):
 
     with open(file) as f:
         line = f.readline()
+        check_header(file, f)
         while line:
             line = line.replace('\n', '')
             curr_line += 1
@@ -158,6 +171,7 @@ def check_file(file):
                 c_specifics(line)
                 check_func(line)
                 check_keyword_paren(line)
+                check_prototype(line)
             line = f.readline()
 
 if __name__ == '__main__':
