@@ -88,7 +88,7 @@ def check_func(line):
         if regex_test(line, '^.*\('):
             in_func_param = True
         if func_line_count == 1 or in_func_param == True:
-            if regex_test(line, '[\t]+.*\(') is None:
+            if regex_test(line, '[\t]+.*\(') is None and regex_test(line, '#define') is None:
                 emit_err("missing tabulation(s) before function's name")
 
     # are we going out ?
@@ -146,6 +146,13 @@ def check_filename(file):
     if regex_test(file, '"Makefile"|(.*\.[ch])') is None:
         sys.stderr.write('error: unsupported file `{}\'\n'.format(file))
 
+def check_macro(line):
+
+    if regex_test(line, '#define'):
+        if regex_test(line, '#define[ \t]+[A-Z0-9_]+(\(.*\))?([ \t]|$)') is None:
+            emit_err('macro name must be uppercase letters and underscores only')
+
+
 # File input ------------------------------------------
 
 def check_file(file):
@@ -175,6 +182,7 @@ def check_file(file):
             check_len(line)
             check_trailing(line)
             check_comments(line)
+            check_macro(line)
             if file.endswith('.c'):
                 c_specifics(line)
                 check_func(line)
