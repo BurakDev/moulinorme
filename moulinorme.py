@@ -166,10 +166,11 @@ def check_prototype(line):
 
 def check_filename(file):
 
-    if regex_test(file, '^([0-9_a-z.])+$') is None:
-        emit_err("invalid file name `{}\'. -> [0-9_a-z]".format(file))
-    if regex_test(file, '"Makefile"|(.*\.[ch])') is None:
+    if regex_test(file, '(.*Makefile)|(.*\.[ch])') is None:
         sys.stderr.write('error: unsupported file `{}\'\n'.format(file))
+        return
+    if regex_test(file, '^(.*/)?Makefile|([0-9_a-z.])+$') is None:
+        emit_err("invalid file name `{}\'. -> [0-9_a-z]".format(file))
 
 def check_macro(line):
 
