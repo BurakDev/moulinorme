@@ -5,6 +5,7 @@
 # check #ifndef MY_HEADER_H_ etc.
 # check Makefile relink
 # add a autorized functions file
+# add some command line arguments
 
 import sys
 import re
