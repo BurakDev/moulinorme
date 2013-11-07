@@ -1,10 +1,10 @@
 #! /usr/bin/env python
 #TODO:
-# check headers
 # check Makefile's coding rules
 # check trivial indentation (spaces/tabulations)
 # check #ifndef MY_HEADER_H_ etc.
 # check Makefile relink
+# add a autorized functions file
 
 import sys
 import re
@@ -134,10 +134,29 @@ def check_comments(line):
         if regex_test(line, '^\*\*') is None:
             emit_err("invalid comment")
 
-#TODO
+def err_header():
+    emit_err("invalid or missing header", 42)
+
+def header_generic(file, f, c1, c2, c3):
+    counter = 1
+    line = f.readline()
+    if line != c1 + '\n':
+        return err_header()
+    while line and counter < 8:
+        line = f.readline()
+        if line.startswith(c2) is False:
+            return err_header()
+        counter += 1
+    if counter != 8:
+        return err_header()
+    if f.readline() != c3 + '\n':
+        return err_header()
+
 def check_header(file, f):
     if file.endswith('.c') or file.endswith('.h'):
-        return
+        header_generic(file, f, '/*', '**', '*/')
+    elif file == 'Makefile':
+        header_generic(file, f, '#', '#', '#')
 
 def check_prototype(line):
     global func_line_count
@@ -179,8 +198,8 @@ def check_file(file):
     is_in_comment = False
 
     with open(file) as f:
-        line = f.readline()
         check_header(file, f)
+        line = f.readline()
         check_filename(file)
         while line:
             line = line.replace('\n', '')
