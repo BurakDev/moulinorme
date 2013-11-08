@@ -8,6 +8,7 @@
 # add some command line arguments
 
 import sys
+import os
 import re
 
 score = 0
@@ -92,20 +93,21 @@ def check_func(line):
     if func_line_count == 0:
         if regex_test(line, '^.*\(.*\)$'):
             func_line_count += 1
-        if regex_test(line, '^.*\('):
+        elif regex_test(line, '^.*\('):
             in_func_param = True
+            func_line_count += 1
         if func_line_count == 1 or in_func_param == True:
             if regex_test(line, '[\t]+.*\(') is None and regex_test(line, '#define') is None:
                 emit_err("missing tabulation(s) before function's name")
 
     # are we going out ?
     if func_line_count > 0 and regex_test(line, '^}'):
-        # +2 because we count the brackets
-        if func_line_count - 2 > MAX_LINES_FUNC:
-            emit_err('function is is more than {} lines'.format(MAX_LINES_FUNC), (func_line_count - 2) - MAX_LINES_FUNC)
+        # -3 because we count the brackets and the function's name
+        if func_line_count - 3 > MAX_LINES_FUNC:
+            emit_err('function is is more than {} lines'.format(MAX_LINES_FUNC), (func_line_count - 3) - MAX_LINES_FUNC)
         func_line_count = 0
         return 0
-    if func_line_count > 0:
+    if func_line_count > 0 and in_func_param == False:
         func_line_count += 1
 
 
@@ -135,29 +137,33 @@ def check_comments(line):
         if regex_test(line, '^\*\*') is None:
             emit_err("invalid comment")
 
-def err_header():
+def err_header(counter):
     emit_err("invalid or missing header", 42)
+    return counter
 
 def header_generic(file, f, c1, c2, c3):
     counter = 1
     line = f.readline()
     if line != c1 + '\n':
-        return err_header()
+        return err_header(counter)
     while line and counter < 8:
         line = f.readline()
         if line.startswith(c2) is False:
-            return err_header()
+            return err_header(counter)
         counter += 1
     if counter != 8:
-        return err_header()
+        return err_header(counter)
+    counter += 1
     if f.readline() != c3 + '\n':
-        return err_header()
+        return err_header(counter)
+    return counter
 
 def check_header(file, f):
     if file.endswith('.c') or file.endswith('.h'):
-        header_generic(file, f, '/*', '**', '*/')
+        return header_generic(file, f, '/*', '**', '*/')
     elif file == 'Makefile':
-        header_generic(file, f, '#', '#', '#')
+        return header_generic(file, f, '#', '#', '#')
+    return 0
 
 def check_prototype(line):
     global func_line_count
@@ -167,10 +173,10 @@ def check_prototype(line):
 
 def check_filename(file):
 
-    if regex_test(file, '(.*Makefile)|(.*\.[ch])') is None:
+    if regex_test(file, '^(Makefile|(.*\.[ch]))$') is None:
         sys.stderr.write('error: unsupported file `{}\'\n'.format(file))
         return
-    if regex_test(file, '^(.*/)?Makefile|([0-9_a-z.])+$') is None:
+    if regex_test(file, '^Makefile|([0-9_a-z.])+$') is None:
         emit_err("invalid file name `{}\'. -> [0-9_a-z]".format(file))
 
 def check_macro(line):
@@ -200,9 +206,9 @@ def check_file(file):
     is_in_comment = False
 
     with open(file) as f:
-        check_header(file, f)
+        curr_line += check_header(file, f)
         line = f.readline()
-        check_filename(file)
+        check_filename(os.path.basename(file))
         while line:
             line = line.replace('\n', '')
             curr_line += 1
