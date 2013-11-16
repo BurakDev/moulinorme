@@ -2,6 +2,7 @@ aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa
 
 #define test
 
+// hello
 void printf(int a,
             int b)
 {
@@ -35,3 +36,30 @@ void printf(int a,
     ceci est
 }
  
+void toto()
+{
+}
+
+void toto()
+{
+}
+
+void toto()
+{
+}
+
+
+void toto()
+{
+}
+
+
+void toto()
+{
+}
+
+
+void toto()
+{
+}
+

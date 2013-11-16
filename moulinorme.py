@@ -86,7 +86,6 @@ def check_func(line):
         if regex_test(line, '{'):
             in_func_param = False
             func_line_count += 1
-            func_count += 1
             if func_param_number > MAX_PARAM:
                 emit_err("too many parameters", func_param_number - MAX_PARAM)
             func_param_number = 1
@@ -106,6 +105,8 @@ def check_func(line):
         if func_line_count - 3 > MAX_LINES_FUNC:
             emit_err('function is is more than {} lines'.format(MAX_LINES_FUNC), (func_line_count - 3) - MAX_LINES_FUNC)
         func_line_count = 0
+        #add one function to count
+        func_count += 1
         return 0
     if func_line_count > 0 and in_func_param == False:
         func_line_count += 1
@@ -115,6 +116,8 @@ def check_comments(line):
     global is_in_comment
     global func_line_count
 
+    if regex_test(line, '//'):
+        emit_err('invalid C++ like comment')
     if  func_line_count > 0 and regex_test(line, '/\*'):
         emit_err('comments are not allowed within functions')
     if regex_test(line, '^.+/\*'):
@@ -222,6 +225,8 @@ def check_file(file):
                 check_keyword_paren(line)
                 check_prototype(line)
             line = f.readline()
+    if func_count > MAX_FUNCS:
+        emit_err('there is {} functions in this file (max: {})'.format(func_count, MAX_FUNCS), func_count - MAX_FUNCS)
 
 if __name__ == '__main__':
 
