@@ -120,14 +120,15 @@ def check_comments(line):
         emit_err('invalid C++ like comment')
     if  func_line_count > 0 and regex_test(line, '/\*'):
         emit_err('comments are not allowed within functions')
-    if regex_test(line, '^.+/\*'):
-        emit_err('invalid comment (check characters before "/*")')
-    if regex_test(line, '^/\*.+'):
-        emit_err('invalid comment (check trailing characters)')
-    if regex_test(line, '^.+\*/'):
-        emit_err('invalid comment (check characters before "*/")')
-    if regex_test(line, '^\*/.+'):
-        emit_err('invalid comment (check trailing characters)')
+    if regex_test(line, '^#endif') == False:
+        if regex_test(line, '^.+/\*'):
+            emit_err('invalid comment (check characters before "/*")')
+        if regex_test(line, '^/\*.+'):
+            emit_err('invalid comment (check trailing characters)')
+        if regex_test(line, '^.+\*/'):
+            emit_err('invalid comment (check characters before "*/")')
+        if regex_test(line, '^\*/.+'):
+            emit_err('invalid comment (check trailing characters)')
 
     if regex_test(line, '^/\*'):
         is_in_comment = True
